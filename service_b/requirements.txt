@@ -1,0 +1,4 @@
+fastapi
+uvicorn[standard]
+pika
+requests  # przyda się później do wysyłania wyników do A
