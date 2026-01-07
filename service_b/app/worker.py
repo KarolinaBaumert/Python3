@@ -33,7 +33,8 @@ def callback(ch, method, properties, body):
     print(f"Result for {job_id} sent to Service A")
     ch.basic_ack(delivery_tag=method.delivery_tag)
   except Exception as e:
-    print(f"Error sending result for {job_id}: {e}")
+    print(f"Error sending result for {job_id}: {e}. Message will be requeued.")
+    ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
     time.sleep(2)
 
 def main():
