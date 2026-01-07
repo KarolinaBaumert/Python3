@@ -35,7 +35,6 @@ def callback(ch, method, properties, body):
   except Exception as e:
     print(f"Error sending result for {job_id}: {e}. Message will be requeued.")
     ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
-    time.sleep(2)
 
 def main():
   credentials = pika.PlainCredentials(RABBITMQ_USER, RABBITMQ_PASS)
