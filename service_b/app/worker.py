@@ -33,8 +33,8 @@ def callback(ch, method, properties, body):
     print(f"Result for {job_id} sent to Service A")
     ch.basic_ack(delivery_tag=method.delivery_tag)
   except Exception as e:
-    print(f"Error sending result for {job_id}: {e}")
-    time.sleep(2)
+    print(f"Error sending result for {job_id}: {e}.  Requeuing...")
+    ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
 
 def main():
   credentials = pika.PlainCredentials(RABBITMQ_USER, RABBITMQ_PASS)
@@ -51,3 +51,4 @@ def main():
 
 if __name__ == "__main__":
   main()
+
