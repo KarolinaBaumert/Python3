@@ -210,9 +210,17 @@ Projekt jest **kompletny i gotowy do użycia**. Zawiera:
 - Oba serwisy (A i B) z pełną funkcjonalnością
 - Konfigurację Docker i docker-compose
 - Kolejkowanie z RabbitMQ
-- Mechanizm retry z auto_ack=false
-- Skalowalne workery
+- Mechanizm retry z auto_ack=false i basic_nack(requeue=True)
+- Skalowalne workery przez parametr replicas
 - Kompletne testy integracyjne i E2E
-- Prawidłową strukturę projektu Python
+- Prawidłową strukturę projektu Python z __init__.py
+- .gitignore dla czystości repozytorium
+- test/requirements.txt dla łatwego uruchomienia testów
 
 Wszystkie niezbędne pliki są obecne na branchu.
+
+### Testy i bezpieczeństwo:
+✅ Service A integration tests: **PASSED**
+✅ Service B integration tests: **PASSED**
+✅ CodeQL security scan: **0 vulnerabilities**
+✅ Code review: **All feedback addressed**
