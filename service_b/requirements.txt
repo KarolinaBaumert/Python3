@@ -2,3 +2,4 @@ fastapi
 uvicorn[standard]
 pika
 requests
+python-multipart

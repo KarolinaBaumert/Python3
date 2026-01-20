@@ -25,11 +25,15 @@ services:
     depends_on:
       - rabbitmq
       - service_a
+    volumes:
+      - ./uploads:/app/uploads
   service_b_worker:
     build: ./service_b
     command: [ "python", "-m", "app.worker" ]
     depends_on:
       - rabbitmq
       - service_a
+    volumes:
+      - ./uploads:/app/uploads
     deploy:
       replicas: 1
