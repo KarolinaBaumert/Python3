@@ -42,3 +42,44 @@ def test_analyze_upload(mock_get_conn):
     message = json.loads(call_args.kwargs['body'])
     assert message['image_url'].startswith('file://')
     assert message['job_id'] == body['job_id']
+
+@patch("app.api.get_rabbit_connection")
+def test_analyze_upload_invalid_mime_type(mock_get_conn):
+    """Test that invalid MIME types are rejected"""
+    fake_file = io.BytesIO(b"fake content")
+    
+    resp = client.post(
+        "/analyze/upload",
+        files={"file": ("test.txt", fake_file, "text/plain")}
+    )
+    
+    assert resp.status_code == 400
+    assert "Invalid file type" in resp.json()["detail"]
+
+@patch("app.api.get_rabbit_connection")
+def test_analyze_upload_invalid_extension(mock_get_conn):
+    """Test that invalid file extensions are rejected"""
+    fake_file = io.BytesIO(b"fake content")
+    
+    resp = client.post(
+        "/analyze/upload",
+        files={"file": ("test.exe", fake_file, "image/jpeg")}
+    )
+    
+    assert resp.status_code == 400
+    assert "Invalid file extension" in resp.json()["detail"]
+
+@patch("app.api.get_rabbit_connection")
+def test_analyze_upload_file_too_large(mock_get_conn):
+    """Test that files exceeding size limit are rejected"""
+    # Create a file larger than 10 MB
+    large_content = b"x" * (11 * 1024 * 1024)
+    fake_file = io.BytesIO(large_content)
+    
+    resp = client.post(
+        "/analyze/upload",
+        files={"file": ("large.jpg", fake_file, "image/jpeg")}
+    )
+    
+    assert resp.status_code == 413
+    assert "File too large" in resp.json()["detail"]

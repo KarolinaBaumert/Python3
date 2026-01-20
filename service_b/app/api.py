@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, HTTPException
 from pydantic import BaseModel
 import uuid
 import json
@@ -15,6 +15,11 @@ QUEUE_NAME = "analysis_requests"
 # Use /app/uploads in production (Docker), or ./uploads locally for testing
 UPLOAD_DIR = Path(os.environ.get("UPLOAD_DIR", "/app/uploads"))
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+# File upload constraints
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"}
+ALLOWED_MIME_TYPES = {"image/jpeg", "image/png", "image/gif", "image/bmp", "image/webp"}
 
 app = FastAPI(title="Service B - Analysis API")
 
@@ -56,16 +61,41 @@ def analyze(req: AnalyzeRequest):
 @app.post("/analyze/upload", response_model=AnalyzeResponse, status_code=202)
 async def analyze_upload(file: UploadFile = File(...)):
   """Upload a photo and analyze it. Photo will be stored on the server."""
+  
+  # Validate MIME type
+  if file.content_type not in ALLOWED_MIME_TYPES:
+    raise HTTPException(
+      status_code=400,
+      detail=f"Invalid file type. Allowed types: {', '.join(ALLOWED_MIME_TYPES)}"
+    )
+  
+  # Validate file extension
+  if not file.filename:
+    raise HTTPException(status_code=400, detail="Filename is required")
+  
+  file_extension = Path(file.filename).suffix.lower()
+  if file_extension not in ALLOWED_EXTENSIONS:
+    raise HTTPException(
+      status_code=400,
+      detail=f"Invalid file extension. Allowed extensions: {', '.join(ALLOWED_EXTENSIONS)}"
+    )
+  
   job_id = str(uuid.uuid4())
   
-  # Generate unique filename with original extension
-  file_extension = Path(file.filename).suffix if file.filename else ".jpg"
+  # Generate unique filename with validated extension
   unique_filename = f"{job_id}{file_extension}"
   file_path = UPLOAD_DIR / unique_filename
   
+  # Read and validate file size
+  content = await file.read()
+  if len(content) > MAX_FILE_SIZE:
+    raise HTTPException(
+      status_code=413,
+      detail=f"File too large. Maximum size: {MAX_FILE_SIZE / 1024 / 1024:.1f} MB"
+    )
+  
   # Save the uploaded file
   with open(file_path, "wb") as buffer:
-    content = await file.read()
     buffer.write(content)
   
   # Create message with local file path
